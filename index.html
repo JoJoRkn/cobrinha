@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <title>Jogo da Cobrinha com Jumpscare</title>
+  <style>
+    body {
+      margin: 0;
+      background: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: sans-serif;
+    }
+    /* Estilo do canvas */
+    canvas {
+      background: #000;
+      border: 2px solid #fff;
+    }
+    /* Estilo do jumpscare (inicialmente oculto) */
+    #jumpscare {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+    #jumpscare img {
+      max-width: 100%;
+      max-height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="400" height="400"></canvas>
+  <div id="jumpscare">
+    <img src="https://media.discordapp.net/attachments/1222344813186252961/1356279412236091614/Imagem_do_WhatsApp_de_2025-03-31_as_11.50.00_580a68f8.jpg?ex=67ebfd22&is=67eaaba2&hm=a1a9eabd98700afe37b715aa767b84ceab7514f02dfe34a46b9999949e162b02&=&format=webp&width=1036&height=988" alt="Jumpscare">
+  </div>
+
+  <script>
+    // Configurações iniciais
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const box = 20; // Tamanho de cada célula da grade
+    let snake = [{x: 9 * box, y: 9 * box}]; // Posição inicial da cobra
+    let direction = "RIGHT";
+    let fruit = randomFruit();
+    let fruitCount = 0; // Contador de frutas comidas
+    let gameSpeed = 100;
+    let gameInterval = setInterval(gameLoop, gameSpeed);
+
+    // Função para gerar posição aleatória para a fruta
+    function randomFruit() {
+      return {
+        x: Math.floor(Math.random() * (canvas.width / box)) * box,
+        y: Math.floor(Math.random() * (canvas.height / box)) * box
+      };
+    }
+
+    // Captura eventos do teclado para movimentação (setas e WASD)
+    document.addEventListener("keydown", (event) => {
+      const key = event.keyCode;
+      // Teclas de seta e WASD:
+      // Esquerda: seta (37) ou A (65)
+      if ((key === 37 || key === 65) && direction !== "RIGHT") direction = "LEFT";
+      // Cima: seta (38) ou W (87)
+      else if ((key === 38 || key === 87) && direction !== "DOWN") direction = "UP";
+      // Direita: seta (39) ou D (68)
+      else if ((key === 39 || key === 68) && direction !== "LEFT") direction = "RIGHT";
+      // Baixo: seta (40) ou S (83)
+      else if ((key === 40 || key === 83) && direction !== "UP") direction = "DOWN";
+    });
+
+    // Função principal do jogo
+    function gameLoop() {
+      // Posição da cabeça da cobra
+      let headX = snake[0].x;
+      let headY = snake[0].y;
+      
+      // Atualiza a posição da cabeça com base na direção
+      if (direction === "LEFT") headX -= box;
+      if (direction === "UP") headY -= box;
+      if (direction === "RIGHT") headX += box;
+      if (direction === "DOWN") headY += box;
+      
+      // Verifica se a cobra bateu nas paredes ou nela mesma
+      if (headX < 0 || headY < 0 || headX >= canvas.width || headY >= canvas.height || collision(headX, headY, snake)) {
+        clearInterval(gameInterval);
+        alert("Game Over!");
+        document.location.reload();
+      }
+      
+      // Verifica se comeu a fruta
+      if (headX === fruit.x && headY === fruit.y) {
+        fruitCount++;
+        // Se for a terceira fruta, dispara o jumpscare
+        if (fruitCount === 3) {
+          showJumpscare();
+          clearInterval(gameInterval);
+          return;
+        }
+        // Gera nova fruta (não remove a cauda, fazendo a cobra crescer)
+        fruit = randomFruit();
+      } else {
+        // Remove a última parte da cauda
+        snake.pop();
+      }
+      
+      // Adiciona nova cabeça à cobra
+      const newHead = { x: headX, y: headY };
+      snake.unshift(newHead);
+      
+      // Desenha o fundo
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Desenha a fruta
+      ctx.fillStyle = "red";
+      ctx.fillRect(fruit.x, fruit.y, box, box);
+      
+      // Desenha a cobra
+      for (let i = 0; i < snake.length; i++) {
+        ctx.fillStyle = (i === 0) ? "lime" : "green";
+        ctx.fillRect(snake[i].x, snake[i].y, box, box);
+      }
+    }
+
+    // Função para verificar colisão da cabeça com o corpo
+    function collision(x, y, array) {
+      for (let i = 0; i < array.length; i++) {
+        if (x === array[i].x && y === array[i].y) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // Função para exibir o jumpscare
+    function showJumpscare() {
+      const jumpscareDiv = document.getElementById("jumpscare");
+      jumpscareDiv.style.display = "flex";
+      // Opcional: recarrega a página após alguns segundos
+      setTimeout(() => {
+        document.location.reload();
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
